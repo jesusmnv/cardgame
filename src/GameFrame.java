@@ -1,16 +1,28 @@
-import javax.swing.JFrame;
+import java.awt.*;
+import java.awt.event.*;
 
-public class GameFrame extends JFrame {
+public class GameFrame extends Frame { // Create a Frame class to hold your game panel
   public GameFrame() {
     setTitle("Card Matching Game");
-    setSize(800, 600);
-    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    setLocationRelativeTo(null); // Center window on screen
-    add(new GamePanel()); // Add the game panel to the frame
+    setSize(800, 600); // Set the size of the frame
+    setLayout(new BorderLayout());
+
+    // Create and add the GamePanel
+    GamePanel gamePanel = new GamePanel();
+    add(gamePanel, BorderLayout.CENTER);
+
+    // Add a WindowListener to handle closing the window
+    addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        System.exit(0); // Close the application
+      }
+    });
+
+    setVisible(true); // Make the frame visible
   }
 
   public static void main(String[] args) {
-    GameFrame frame = new GameFrame();
-    frame.setVisible(true); // Show the game window
+    new GameFrame(); // Start the application
   }
 }

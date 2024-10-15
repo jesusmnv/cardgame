@@ -1,151 +1,163 @@
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.Collections;
+import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.TimerTask;
 import java.util.Timer;
+import java.util.TimerTask;
 
-public class GamePanel extends JPanel {
-    private List<Card> cards; // List to hold the cards
-    private JButton resetButton;
-    private JButton exitButton;
-    private JLabel timerLabel;
-    private JLabel scoreLabel; // New JLabel for score
-    private JComboBox<String> styleComboBox;
-    private int score = 0;
-    private int revealedCount = 0; // Count of revealed cards
-    private Timer timer; // Timer for the countdown
-    private int timeLeft = 300; // 5 minutes in seconds
-    private boolean gameActive = false;
-    private JPanel animatedPanel; // New JPanel for animated graphic
+public class GamePanel extends Panel {
+  private List<Card> cards; // List to hold the cards
+  private List<Card> flippedCards; // New list to hold permanently flipped cards
+  private Button resetButton;
+  private Button exitButton;
+  private Label timerLabel;
+  private Label scoreLabel;
+  private int score = 0;
+  private Timer timer;
+  private int timeLeft = 300; // 5 minutes in seconds
 
-    public GamePanel() {
-        setLayout(new BorderLayout());
-        setBackground(Color.LIGHT_GRAY);
+  public GamePanel() {
+    setLayout(new BorderLayout());
+    setBackground(Color.LIGHT_GRAY);
 
-        // Initialize components
-        resetButton = new JButton("Reset");
-        exitButton = new JButton("Exit");
-        timerLabel = new JLabel("Time Left: 5:00");
-        scoreLabel = new JLabel("Score: 0"); // Initialize score label
-        styleComboBox = new JComboBox<>(new String[] { "Numbers", "Letters", "Shapes" });
+    // Initialize components
+    resetButton = new Button("Reset");
+    exitButton = new Button("Exit");
+    timerLabel = new Label("Time Left: 5:00");
+    scoreLabel = new Label("Score: 0");
 
-        // Panel for buttons, timer, and score
-        JPanel controlPanel = new JPanel();
-        controlPanel.add(styleComboBox);
-        controlPanel.add(resetButton);
-        controlPanel.add(exitButton);
-        controlPanel.add(timerLabel);
-        controlPanel.add(scoreLabel); // Add score label to the control panel
+    // Initialize the list for flipped cards
+    flippedCards = new ArrayList<>();
 
-        add(controlPanel, BorderLayout.NORTH);
+    // Panel for buttons, timer, and score
+    Panel controlPanel = new Panel();
+    controlPanel.add(resetButton);
+    controlPanel.add(exitButton);
+    controlPanel.add(timerLabel);
+    controlPanel.add(scoreLabel);
 
-        // Add animated graphic panel
-        animatedPanel = new JPanel();
-        animatedPanel.setPreferredSize(new Dimension(200, 200)); // Set size for the animated panel
-        animatedPanel.setBorder(BorderFactory.createTitledBorder("Animated Graphic"));
-        add(animatedPanel, BorderLayout.CENTER); // Place it in the center
+    add(controlPanel, BorderLayout.NORTH);
 
-        // Add MouseListener to handle card clicks
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                handleCardClick(e.getX(), e.getY());
-            }
-        });
+    // Add action listeners to buttons
+    resetButton.addActionListener(e -> resetGame());
+    exitButton.addActionListener(e -> System.exit(0));
 
-        // Add action listeners to buttons
-        resetButton.addActionListener(e -> resetGame());
-        exitButton.addActionListener(e -> System.exit(0));
-        styleComboBox.addActionListener(e -> setupGame());
+    setupGame(); // Initialize the game
+  }
 
-        setupGame(); // Initialize the game
+  private void setupGame() {
+    cards = CardFactory.createCards("Numbers"); // Replace with your logic for styles
+    score = 0;
+    scoreLabel.setText("Score: " + score); // Reset score label
+
+    // Reset the timer
+    if (timer != null) {
+      timer.cancel();
     }
+    timeLeft = 300; // Reset time to 5 minutes
+    startTimer();
 
-    private void setupGame() {
-        cards = CardFactory.createCards((String) styleComboBox.getSelectedItem());
-        revealedCount = 0;
-        score = 0;
-        scoreLabel.setText("Score: " + score); // Reset score label
+    // Clear previous cards from the panel
+    removeAll(); // Clear previous cards
 
-        // Reset the timer
-        if (timer != null) {
-            timer.cancel();
+    // Add the cards to the panel
+    for (Card card : cards) {
+      card.setPreferredSize(new Dimension(100, 150)); // Set size for each card
+      add(card); // Add the card to the panel
+
+      // Add a mouse listener to each card
+      card.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          handleCardClick(card);
         }
-        timeLeft = 300; // Reset time to 5 minutes
-        timerLabel.setForeground(Color.BLACK);
-        startTimer();
-
-        repaint(); // Refresh the panel
+      });
     }
 
-    private void startTimer() {
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    int minutes = timeLeft / 60;
-                    int seconds = timeLeft % 60;
-                    timerLabel.setText(String.format("Time Left: %d:%02d", minutes, seconds));
+    revalidate(); // Revalidate the panel to reflect the changes
+    repaint(); // Refresh the panel
+  }
 
-                    // Flash the background when 10 seconds are left
-                    if (timeLeft <= 10) {
-                        setBackground(getBackground() == Color.RED ? Color.YELLOW : Color.RED);
-                    }
-                } else {
-                    timer.cancel();
-                    JOptionPane.showMessageDialog(null, "Time's up! Your score: " + score);
-                    resetGame();
-                }
-                repaint();
-            }
-        }, 1000, 1000); // Update every second
-    }
-
-    private void handleCardClick(int x, int y) {
-        // Check which card is clicked and reveal it
-        for (Card card : cards) {
-            if (card.getBounds().contains(x, y) && !card.isRevealed()) {
-                card.reveal(); // Reveal the card
-                revealedCount++;
-                score++; // Increase score for each revealed card
-                scoreLabel.setText("Score: " + score); // Update score label
-                repaint();
-                break; // Exit after handling the first click
-            }
+  private void startTimer() {
+    timer = new Timer();
+    timer.scheduleAtFixedRate(new TimerTask() {
+      @Override
+      public void run() {
+        if (timeLeft > 0) {
+          timeLeft--;
+          int minutes = timeLeft / 60;
+          int seconds = timeLeft % 60;
+          timerLabel.setText(String.format("Time Left: %d:%02d", minutes, seconds));
+        } else {
+          timer.cancel();
+          showMessage("Time's up! Your score: " + score);
+          resetGame();
         }
+        repaint();
+      }
+    }, 1000, 1000); // Update every second
+  }
+
+  private void handleCardClick(Card clickedCard) {
+    // Check if the card is already permanently flipped or revealed
+    if (flippedCards.contains(clickedCard) || clickedCard.isRevealed()) {
+      return; // Ignore if already revealed
     }
 
-    private void resetGame() {
-        setupGame(); // Resets the game
-        timerLabel.setText("Time Left: 5:00");
-        setBackground(Color.LIGHT_GRAY); // Reset background color
+    clickedCard.reveal(); // Reveal the clicked card
+    score++; // Increase score for each revealed card
+    scoreLabel.setText("Score: " + score); // Update score label
+    repaint();
+
+    // Check for pairs
+    if (cards.stream().filter(Card::isRevealed).count() == 2) {
+      checkForMatch();
     }
+  }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        int cardWidth = 200;
-        int cardHeight = 250;
-        int x = 50, y = 100; // Starting positions for the cards
+  private void checkForMatch() {
+    // Find the two revealed cards
+    Card[] revealedCards = cards.stream().filter(Card::isRevealed).toArray(Card[]::new);
 
-        // Draw all cards
-        for (Card card : cards) {
-            card.setBounds(x, y, cardWidth, cardHeight);
-            card.add(card); // Use the card's draw method to display it
-            x += cardWidth + 10; // Adjust x position for next card
-
-            // Move to the next row after reaching the end of the panel
-            if (x + cardWidth > getWidth()) {
-                x = 50;
-                y += cardHeight + 10;
-            }
-        }
+    if (revealedCards.length == 2) {
+      // Check if the two cards match
+      if (revealedCards[0].matches(revealedCards[1])) {
+        // They match, add to permanently flipped cards
+        flippedCards.add(revealedCards[0]);
+        flippedCards.add(revealedCards[1]);
+        score += 10; // Increase score for a match
+      } else {
+        // They do not match, reset them after a short delay
+        TimerTask task = new TimerTask() {
+          @Override
+          public void run() {
+            revealedCards[0].flipDown();
+            revealedCards[1].flipDown();
+            score -= 2; // Decrease score for an incorrect match
+            scoreLabel.setText("Score: " + score); // Update score label
+            repaint();
+          }
+        };
+        new Timer().schedule(task, 1000); // Delay for visibility
+      }
     }
+  }
+
+  private void resetGame() {
+    setupGame(); // Resets the game
+    timerLabel.setText("Time Left: 5:00");
+    setBackground(Color.LIGHT_GRAY); // Reset background color
+  }
+
+  private void showMessage(String message) {
+    Dialog dialog = new Dialog((Frame) null, "Message", true);
+    dialog.setLayout(new BorderLayout());
+    dialog.add(new Label(message), BorderLayout.CENTER);
+    Button okButton = new Button("OK");
+    okButton.addActionListener(e -> dialog.dispose());
+    dialog.add(okButton, BorderLayout.SOUTH);
+    dialog.setSize(300, 150);
+    dialog.setLocationRelativeTo(null);
+    dialog.setVisible(true);
+  }
 }

@@ -1,14 +1,12 @@
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
+import java.awt.*;
+import java.awt.event.*;
 
-import javax.swing.*;
-
-public class Card extends JButton {
+// Card class represents a single card in the game
+public class Card extends Button {
   private Object content; // Content can be Shape, Number, or Letter
   private boolean isFlipped = false;
   private boolean isMatched = false;
-  private boolean revealed; // State of the card
+  private boolean revealed = false; // State of the card (whether permanently revealed)
 
   // Constructor for shapes
   public Card(Shape shape) {
@@ -32,42 +30,70 @@ public class Card extends JButton {
     setPreferredSize(new Dimension(100, 100)); // Set card size
     setFont(new Font("Arial", Font.BOLD, 36)); // Font for text-based content
     setBackground(Color.LIGHT_GRAY); // Background color for the card
-    setHorizontalAlignment(SwingConstants.CENTER); // Center text or icon
     flipDown(); // Initially, the card should be flipped down
+
+    // Add a listener to handle click events for flipping cards
+    addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (!isFlipped) {
+          flipUp(); // Flip up the card if it's not already flipped
+        } else {
+          flipDown(); // Flip down the card if it is flipped
+        }
+      }
+    });
   }
 
   public void flipUp() {
-    if (content instanceof Shape) {
-      Shape shape = (Shape) content;
-      setIcon(shape.getShapeIcon(getWidth(), getHeight())); // Pass the card's current size
-      setText(""); // Clear text when shape is shown
-    } else {
-      setIcon(null); // No icon for text-based content
-      setText(content.toString()); // Display the content (number or letter)
-      setForeground(Color.BLACK); // Set color for number or letter
+    if (!revealed) { // Ensure not flipping if the card is permanently revealed
+      isFlipped = true;
+      setBackground(Color.WHITE); // Change background when card is flipped
+      repaint(); // Repaint to show the content
     }
-    isFlipped = true;
-    setBackground(Color.WHITE); // Change background when card is flipped
   }
 
   public void flipDown() {
-    setIcon(null); // Remove any shape icon
-    setText(""); // Clear text
-    setBackground(Color.LIGHT_GRAY); // Reset background color
-    isFlipped = false;
+    if (!revealed) { // Ensure not flipping down if the card is permanently revealed
+      isFlipped = false;
+      setBackground(Color.LIGHT_GRAY); // Reset background color
+      setLabel(""); // Clear label to hide content
+      repaint(); // Repaint to clear content
+    }
   }
 
-  // Method to reveal the card (permanently showing its content)
+  // Method to reveal the card permanently (showing its content)
   public void reveal() {
     revealed = true;
-    flipUp(); // When revealed, flip the card up
+    flipUp(); // When revealed, the card is flipped up and stays up
+    setLabel(content.toString()); // Set label to display the content
   }
 
-  // Method to check if the card is revealed
+  // Method to check if the card is permanently revealed
   public boolean isRevealed() {
     return revealed;
   }
 
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+    if (isFlipped || revealed) {
+      // Draw the content based on its type
+      if (content instanceof Shape) {
+        ((Shape) content).drawShape(g, getWidth(), getHeight(), this);
+      } else if (content instanceof Integer || content instanceof Character) {
+        g.setFont(getFont());
+        g.setColor(Color.BLACK);
+        String text = content.toString();
+        FontMetrics fm = g.getFontMetrics();
+        int textWidth = fm.stringWidth(text);
+        int textHeight = fm.getAscent();
+        g.drawString(text, (getWidth() - textWidth) / 2, (getHeight() + textHeight) / 2 - fm.getDescent());
+      }
+    }
+  }
+
+  // Other methods related to card state and matching
   public boolean isFlipped() {
     return isFlipped;
   }
