@@ -1,15 +1,15 @@
-import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class CardMatchingGame extends JFrame {
-  private JPanel gamePanel;
-  private JComboBox<String> styleComboBox;
-  private JButton resetButton, exitButton;
-  private JLabel timerLabel, scoreLabel;
+public class CardMatchingGame extends Frame {
+  private Panel gamePanel;
+  private Choice styleChoice;
+  private Button resetButton, exitButton;
+  private Label timerLabel, scoreLabel;
   private int score = 0;
   private Timer gameTimer;
   private int timeRemaining = 300; // 5 minutes = 300 seconds
@@ -21,39 +21,41 @@ public class CardMatchingGame extends JFrame {
 
   public CardMatchingGame() {
     setTitle("Card Matching Game");
-    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setLayout(new BorderLayout());
 
-    // Create top panel with combo box, timer, and score
-    JPanel topPanel = new JPanel();
-    topPanel.setLayout(new GridLayout(1, 4));
+    // Create top panel with choice, timer, and score
+    Panel topPanel = new Panel();
+    topPanel.setLayout(new GridLayout(1, 5));
 
-    // ComboBox to select style
-    styleComboBox = new JComboBox<>(new String[] { "Numbers", "Letters", "Shapes" });
-    styleComboBox.addActionListener(e -> resetGame());
-    topPanel.add(styleComboBox);
+    // Choice to select style
+    styleChoice = new Choice();
+    styleChoice.add("Numbers");
+    styleChoice.add("Letters");
+    styleChoice.add("Shapes");
+    styleChoice.addItemListener(e -> resetGame());
+    topPanel.add(styleChoice);
 
     // Timer label
-    timerLabel = new JLabel("Time: 5:00");
+    timerLabel = new Label("Time: 5:00");
     topPanel.add(timerLabel);
 
     // Score label
-    scoreLabel = new JLabel("Score: 0");
+    scoreLabel = new Label("Score: 0");
     topPanel.add(scoreLabel);
 
     // Reset and exit buttons
-    resetButton = new JButton("Reset");
+    resetButton = new Button("Reset");
     resetButton.addActionListener(e -> resetGame());
     topPanel.add(resetButton);
 
-    exitButton = new JButton("Exit");
+    exitButton = new Button("Exit");
     exitButton.addActionListener(e -> System.exit(0));
     topPanel.add(exitButton);
 
     add(topPanel, BorderLayout.NORTH);
 
     // Create game panel
-    gamePanel = new JPanel();
+    gamePanel = new Panel();
     gamePanel.setLayout(new GridLayout(4, 5, 5, 5)); // 4x5 grid
     add(gamePanel, BorderLayout.CENTER);
 
@@ -63,17 +65,23 @@ public class CardMatchingGame extends JFrame {
     // Start the game timer
     startTimer();
 
-    pack();
     setSize(600, 400);
     setVisible(true);
+
+    // Close operation
+    addWindowListener(new WindowAdapter() {
+      public void windowClosing(WindowEvent we) {
+        System.exit(0);
+      }
+    });
   }
 
   private void startGame() {
     gamePanel.removeAll(); // Clear previous cards
     cards = new ArrayList<>();
 
-    // Get selected style from combo box
-    String selectedStyle = (String) styleComboBox.getSelectedItem();
+    // Get selected style from choice
+    String selectedStyle = styleChoice.getSelectedItem();
 
     // Create pairs of cards based on the selected style
     if (selectedStyle.equals("Shapes")) {
@@ -104,7 +112,12 @@ public class CardMatchingGame extends JFrame {
     // Add the cards to the game panel
     for (Card card : cards) {
       gamePanel.add(card);
-      card.addActionListener(e -> handleCardSelection(card));
+      card.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          handleCardSelection(card);
+        }
+      });
     }
 
     gamePanel.revalidate();
@@ -128,7 +141,7 @@ public class CardMatchingGame extends JFrame {
         timerLabel.setText(String.format("Time: %d:%02d", minutes, seconds));
 
         if (timeRemaining == 0) {
-          JOptionPane.showMessageDialog(null, "Time's up! Game over.");
+          System.out.println("Time's up! Game over."); // Change to your preferred way to display messages
           resetGame();
         }
 
@@ -151,7 +164,7 @@ public class CardMatchingGame extends JFrame {
       }
     };
 
-    new java.util.Timer().schedule(task, 500); // Flash red/yellow every 500ms
+    new Timer().schedule(task, 500); // Flash red/yellow every 500ms
   }
 
   private void handleCardSelection(Card selectedCard) {
@@ -186,7 +199,7 @@ public class CardMatchingGame extends JFrame {
         }
       };
 
-      new java.util.Timer().schedule(task, 100); // Wait 300 milisecons before checking
+      new Timer().schedule(task, 100); // Wait 100 milliseconds before checking
     }
   }
 
@@ -196,6 +209,6 @@ public class CardMatchingGame extends JFrame {
   }
 
   public static void main(String[] args) {
-    SwingUtilities.invokeLater(CardMatchingGame::new);
+    new CardMatchingGame();
   }
 }

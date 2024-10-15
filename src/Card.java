@@ -1,14 +1,16 @@
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Button;
+import java.awt.Graphics;
+import java.awt.Image;
 
-import javax.swing.*;
-
-public class Card extends JButton {
+public class Card extends Button {
   private Object content; // Content can be Shape, Number, or Letter
   private boolean isFlipped = false;
   private boolean isMatched = false;
-  private boolean revealed; // State of the card
+  private boolean revealed = false; // State of the card
+  private Image shapeImage; // To hold shape icon
 
   // Constructor for shapes
   public Card(Shape shape) {
@@ -32,29 +34,41 @@ public class Card extends JButton {
     setPreferredSize(new Dimension(100, 100)); // Set card size
     setFont(new Font("Arial", Font.BOLD, 36)); // Font for text-based content
     setBackground(Color.LIGHT_GRAY); // Background color for the card
-    setHorizontalAlignment(SwingConstants.CENTER); // Center text or icon
     flipDown(); // Initially, the card should be flipped down
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+    if (isFlipped) {
+      if (shapeImage != null) {
+        g.drawImage(shapeImage, 0, 0, getWidth(), getHeight(), this);
+      } else {
+        g.setColor(Color.BLACK);
+        String text = content.toString();
+        g.drawString(text, (getWidth() - g.getFontMetrics().stringWidth(text)) / 2,
+            (getHeight() + g.getFontMetrics().getAscent()) / 2);
+      }
+    }
   }
 
   public void flipUp() {
     if (content instanceof Shape) {
       Shape shape = (Shape) content;
-      setIcon(shape.getShapeIcon(getWidth(), getHeight())); // Pass the card's current size
-      setText(""); // Clear text when shape is shown
+      shapeImage = shape.getShapeImage(getWidth(), getHeight()); // Get the shape icon
     } else {
-      setIcon(null); // No icon for text-based content
-      setText(content.toString()); // Display the content (number or letter)
-      setForeground(Color.BLACK); // Set color for number or letter
+      shapeImage = null; // No icon for text-based content
     }
     isFlipped = true;
     setBackground(Color.WHITE); // Change background when card is flipped
+    repaint(); // Refresh the card to show the content
   }
 
   public void flipDown() {
-    setIcon(null); // Remove any shape icon
-    setText(""); // Clear text
-    setBackground(Color.LIGHT_GRAY); // Reset background color
+    shapeImage = null; // Remove any shape icon
     isFlipped = false;
+    setBackground(Color.LIGHT_GRAY); // Reset background color
+    repaint(); // Refresh the card to hide the content
   }
 
   // Method to reveal the card (permanently showing its content)

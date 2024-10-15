@@ -1,8 +1,8 @@
-import javax.swing.*;
+import java.awt.Image;
 
 public class Hexagon extends Shape {
   @Override
-  public Icon getShapeIcon(int cardWidth, int cardHeight) {
-    return createIcon("/shapes/hexagon.png", cardWidth, cardHeight); // Update the path as needed
+  public Image getShapeImage(int cardWidth, int cardHeight) {
+    return createImage("/shapes/hexagon.png", cardWidth, cardHeight); // Update the path as needed
   }
 }

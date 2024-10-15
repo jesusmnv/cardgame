@@ -1,8 +1,8 @@
-import javax.swing.*;
+import java.awt.Image;
 
 public class Pentagon extends Shape {
   @Override
-  public Icon getShapeIcon(int cardWidth, int cardHeight) {
-    return createIcon("/shapes/pentagon.png", cardWidth, cardHeight); // Update the path as needed
+  public Image getShapeImage(int cardWidth, int cardHeight) {
+    return createImage("/shapes/pentagon.png", cardWidth, cardHeight); // Update the path as needed
   }
 }
